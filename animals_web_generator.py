@@ -1,12 +1,12 @@
 """
 Generate an HTML page with information about animals.
 
-Fetches data about foxes from the API Ninjas animals endpoint,
-fills it into the placeholder of animals_template.html and saves
-the result as animals.html.
+Asks the user for an animal name, fetches the matching animals
+via data_fetcher from the API Ninjas animals endpoint, fills them
+into the placeholder of animals_template.html and saves the result
+as animals.html.
 """
 
-import requests
 import html
 import data_fetcher
 
@@ -63,52 +63,54 @@ def serialize_animal(animal):
 
     animal_info = '<li class="cards__item">'
     if name:
-        animal_info += f'<div class="card__title">{name}</div>'
+        animal_info += f'<div class="card__title">{html.escape(name)}</div>'
     animal_info += '<div class="card__text">'
-    animal_info += '<ul>'
+    animal_info += "<ul>"
     if diet:
-        animal_info += f'<li><strong>Diet:</strong> {diet}</li>'
+        animal_info += f"<li><strong>Diet:</strong> {html.escape(diet)}</li>"
     if first_location:
-        animal_info += f'<li><strong>Location:</strong> {first_location}</li>'
+        animal_info += f"<li><strong>Location:</strong> {html.escape(first_location)}</li>"
     if animal_type:
-        animal_info += f'<li><strong>Type:</strong> {animal_type}</li>'
+        animal_info += f"<li><strong>Type:</strong> {html.escape(animal_type)}</li>"
     animal_info += "</ul>"
     animal_info += "</div>"
     animal_info += "</li>"
     return animal_info
 
 
+def serialize_not_found(animal_name):
+    """Return an HTML list item telling the user that the animal does not exist."""
+    safe_name = html.escape(animal_name)
+    return (
+        '<li class="cards__item">'
+        '<div class="card__title">No results</div>'
+        '<div class="card__text">'
+        f'<p>Sorry, the animal <span>"{safe_name}"</span> does not exist '
+        "in our repository.</p>"
+        '<p>Please check the spelling or try another animal, e.g. "Fox".</p>'
+        "</div>"
+        "</li>"
+    )
+
+
 def main():
-    """Fetch the animal data, fill it into the HTML template and save the result."""
-
+    """Ask for an animal, fill its data into the HTML template and save the result."""
     animal_name = ask_animal_name()
-    #animals_data = get_animals(animal_name)
-    animals_data = data_fetcher.fetch_data(animal_name)
 
+    animals_data = data_fetcher.fetch_data(animal_name)
     if animals_data is None:
         return
+
     html_template = read_file(TEMPLATE_FILE)
     if html_template is None:
         return
-    if animals_data is None or html_template is None:
-        return
 
-    if not animals_data:
-        safe_name = html.escape(animal_name)
-        animals_info = (
-            '<li class="cards__item">'
-            '<div class="card__title">No results</div>'
-            '<div class="card__text">'
-            f'<p>Sorry, the animal <span>"{safe_name}"</span> does not exist '
-            'in our repository.</p>'
-            '<p>Please check the spelling or try another animal, e.g. "Fox".</p>'
-            '</div>'
-            '</li>'
-        )
-    else:
+    if animals_data:
         animals_info = ""
         for animal in animals_data:
             animals_info += serialize_animal(animal)
+    else:
+        animals_info = serialize_not_found(animal_name)
 
     html_page = html_template.replace(PLACEHOLDER, animals_info)
     if write_file(OUTPUT_FILE, html_page):
