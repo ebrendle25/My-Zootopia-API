@@ -7,6 +7,7 @@ the result as animals.html.
 """
 
 import requests
+import html
 
 TEMPLATE_FILE = "animals_template.html"
 OUTPUT_FILE = "animals.html"
@@ -68,7 +69,7 @@ def write_file(file_path, content):
 
 
 def serialize_animal(animal):
-    """Return the name, diet, first location and type of an animal as an HTML list item..
+    """Return the name, diet, first location and type of an animal as an HTML list item.
 
     Fields that are missing in the data are left out.
     """
@@ -111,9 +112,22 @@ def main():
     if animals_data is None or html_template is None:
         return
 
-    animals_info = ""
-    for animal in animals_data:
-        animals_info += serialize_animal(animal)
+    if not animals_data:
+        safe_name = html.escape(animal_name)
+        animals_info = (
+            '<li class="cards__item">'
+            '<div class="card__title">No results</div>'
+            '<div class="card__text">'
+            f'<p>Sorry, the animal <span>"{safe_name}"</span> does not exist '
+            'in our repository.</p>'
+            '<p>Please check the spelling or try another animal, e.g. "Fox".</p>'
+            '</div>'
+            '</li>'
+        )
+    else:
+        animals_info = ""
+        for animal in animals_data:
+            animals_info += serialize_animal(animal)
 
     html_page = html_template.replace(PLACEHOLDER, animals_info)
     if write_file(OUTPUT_FILE, html_page):
