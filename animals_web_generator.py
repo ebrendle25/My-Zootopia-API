@@ -11,26 +11,36 @@ import requests
 TEMPLATE_FILE = "animals_template.html"
 OUTPUT_FILE = "animals.html"
 PLACEHOLDER = "__REPLACE_ANIMALS_INFO__"
-API_URL = 'https://api.api-ninjas.com/v1/animals?name=fox'
+API_URL = "https://api.api-ninjas.com/v1/animals"
 API_HEADERS = {'X-Api-Key': 'pdHliDdwGHOoegZE2dAcxfi6JSDZAfed0DJipfTV'}
 
-def get_animals():
-    """
-    Generate an HTML page with information about animals.
+def ask_animal_name():
+    """Ask the user for an animal name until a non-empty name is entered."""
+    while True:
+        animal_name = input("Enter a name of an animal: ").strip()
+        if animal_name:
+            return animal_name
+        print("Please enter a name.")
 
-    Fetches data about foxes from the API Ninjas animals endpoint,
-    fills it into the placeholder of animals_template.html and saves
-    the result as animals.html.
-    """
 
+def get_animals(animal_name):
+    """Fetch animals whose name contains animal_name from the API Ninjas API.
+
+    Returns the animals as a list of dictionaries,
+    or None if the request fails.
+    """
     try:
-        response = requests.get(API_URL, headers=API_HEADERS, timeout=30)
+        response = requests.get(
+            API_URL,
+            headers=API_HEADERS,
+            params={"name": animal_name},
+            timeout=30,
+        )
         response.raise_for_status()
-        animals_data = response.json()
-        return animals_data
+        return response.json()
     except requests.exceptions.RequestException as error:
-        print(f"An error has occurred: {error}")
-    return None
+        print(f"Error: could not fetch animal data: {error}")
+        return None
 
 
 def read_file(file_path):
@@ -89,7 +99,10 @@ def serialize_animal(animal):
 
 def main():
     """Fetch the animal data, fill it into the HTML template and save the result."""
-    animals_data = get_animals()
+
+    animal_name = ask_animal_name()
+    animals_data = get_animals(animal_name)
+
     if animals_data is None:
         return
     html_template = read_file(TEMPLATE_FILE)
