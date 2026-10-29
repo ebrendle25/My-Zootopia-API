@@ -8,12 +8,12 @@ the result as animals.html.
 
 import requests
 import html
+import data_fetcher
 
 TEMPLATE_FILE = "animals_template.html"
 OUTPUT_FILE = "animals.html"
 PLACEHOLDER = "__REPLACE_ANIMALS_INFO__"
-API_URL = "https://api.api-ninjas.com/v1/animals"
-API_HEADERS = {'X-Api-Key': 'pdHliDdwGHOoegZE2dAcxfi6JSDZAfed0DJipfTV'}
+
 
 def ask_animal_name():
     """Ask the user for an animal name until a non-empty name is entered."""
@@ -22,26 +22,6 @@ def ask_animal_name():
         if animal_name:
             return animal_name
         print("Please enter a name.")
-
-
-def get_animals(animal_name):
-    """Fetch animals whose name contains animal_name from the API Ninjas API.
-
-    Returns the animals as a list of dictionaries,
-    or None if the request fails.
-    """
-    try:
-        response = requests.get(
-            API_URL,
-            headers=API_HEADERS,
-            params={"name": animal_name},
-            timeout=30,
-        )
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as error:
-        print(f"Error: could not fetch animal data: {error}")
-        return None
 
 
 def read_file(file_path):
@@ -102,7 +82,8 @@ def main():
     """Fetch the animal data, fill it into the HTML template and save the result."""
 
     animal_name = ask_animal_name()
-    animals_data = get_animals(animal_name)
+    #animals_data = get_animals(animal_name)
+    animals_data = data_fetcher.fetch_data(animal_name)
 
     if animals_data is None:
         return
